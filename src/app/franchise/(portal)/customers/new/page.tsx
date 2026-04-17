@@ -1,8 +1,16 @@
-export default function FranchiseCustomerNewPage() {
+import { PageHeader } from "@/components/ui/page-header";
+import { NewCustomerForm } from "./new-customer-form";
+
+export const metadata = { title: "신규 고객" };
+
+export default function Page() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">신규 고객</h1>
-      <p className="mt-2 text-slate-600">동의·측정값 입력은 다음 단계에서 구현합니다.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="신규 고객"
+        description="고객 정보와 첫 3D 스캔 측정값을 함께 등록합니다."
+      />
+      <NewCustomerForm />
     </div>
   );
 }

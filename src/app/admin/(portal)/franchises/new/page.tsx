@@ -1,8 +1,34 @@
-export default function AdminFranchiseNewPage() {
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { NewFranchiseForm } from "./new-franchise-form";
+
+export const metadata = { title: "대리점 개설" };
+
+export default function Page() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">대리점 개설</h1>
-      <p className="mt-2 text-zinc-600">계정 생성 폼은 다음 단계에서 구현합니다.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="대리점 개설"
+        description="신규 대리점 계정과 정보를 생성합니다."
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/franchises">
+              <ArrowLeft className="h-4 w-4" /> 목록
+            </Link>
+          </Button>
+        }
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle>기본 정보</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NewFranchiseForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }

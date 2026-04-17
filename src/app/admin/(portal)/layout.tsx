@@ -1,7 +1,61 @@
 import { getUserProfile } from "@/lib/auth/profile";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  LayoutDashboard,
+  Store,
+  Package,
+  ShoppingCart,
+  BarChart3,
+  LogOut,
+} from "lucide-react";
+import { AppShell, type NavGroup } from "@/components/layout/app-shell";
 import { signOutAdmin } from "./sign-out";
+import { Button } from "@/components/ui/button";
+
+const groups: NavGroup[] = [
+  {
+    items: [
+      {
+        href: "/admin/dashboard",
+        label: "대시보드",
+        icon: <LayoutDashboard className="h-4 w-4" />,
+      },
+    ],
+  },
+  {
+    label: "운영",
+    items: [
+      {
+        href: "/admin/franchises",
+        label: "대리점",
+        icon: <Store className="h-4 w-4" />,
+        matchPrefix: true,
+      },
+      {
+        href: "/admin/products",
+        label: "상품",
+        icon: <Package className="h-4 w-4" />,
+        matchPrefix: true,
+      },
+      {
+        href: "/admin/orders",
+        label: "주문",
+        icon: <ShoppingCart className="h-4 w-4" />,
+        matchPrefix: true,
+      },
+    ],
+  },
+  {
+    label: "분석",
+    items: [
+      {
+        href: "/admin/statistics",
+        label: "통계",
+        icon: <BarChart3 className="h-4 w-4" />,
+      },
+    ],
+  },
+];
 
 export default async function AdminPortalLayout({
   children,
@@ -13,40 +67,27 @@ export default async function AdminPortalLayout({
   if (profile.role !== "super_admin") redirect("/franchise/dashboard");
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link href="/admin/dashboard" className="font-semibold tracking-tight">
-            Cellings · 중앙관리
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/admin/dashboard" className="text-zinc-600 hover:text-zinc-900">
-              대시보드
-            </Link>
-            <Link href="/admin/franchises" className="text-zinc-600 hover:text-zinc-900">
-              대리점
-            </Link>
-            <Link href="/admin/products" className="text-zinc-600 hover:text-zinc-900">
-              상품
-            </Link>
-            <Link href="/admin/orders" className="text-zinc-600 hover:text-zinc-900">
-              주문
-            </Link>
-            <Link href="/admin/statistics" className="text-zinc-600 hover:text-zinc-900">
-              통계
-            </Link>
-            <form action={signOutAdmin}>
-              <button
-                type="submit"
-                className="rounded-md border border-zinc-300 px-3 py-1 text-zinc-700 hover:bg-zinc-100"
-              >
-                로그아웃
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
-    </div>
+    <AppShell
+      brand="중앙관리"
+      subBrand="Cellings"
+      groups={groups}
+      theme="ink"
+      user={
+        <form action={signOutAdmin}>
+          <div className="mb-2 text-xs text-slate-400">Super Admin</div>
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            className="w-full border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+          >
+            <LogOut className="h-4 w-4" />
+            로그아웃
+          </Button>
+        </form>
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

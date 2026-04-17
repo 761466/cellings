@@ -11,7 +11,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
+      className="w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
     >
       {pending ? "로그인 중…" : "로그인"}
     </button>
@@ -20,11 +20,10 @@ function SubmitButton() {
 
 export function AdminLoginForm() {
   const [state, formAction] = useFormState(loginAdmin, initialState);
-
   return (
     <form action={formAction} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="mb-1 block text-sm text-zinc-600">
+      <div className="space-y-1.5">
+        <label htmlFor="email" className="block text-xs text-slate-400">
           이메일
         </label>
         <input
@@ -33,11 +32,12 @@ export function AdminLoginForm() {
           type="email"
           autoComplete="email"
           required
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2"
+          className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-white/30 focus:ring-2 focus:ring-white/10"
+          placeholder="admin@cellings.kr"
         />
       </div>
-      <div>
-        <label htmlFor="password" className="mb-1 block text-sm text-zinc-600">
+      <div className="space-y-1.5">
+        <label htmlFor="password" className="block text-xs text-slate-400">
           비밀번호
         </label>
         <input
@@ -46,11 +46,11 @@ export function AdminLoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2"
+          className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10"
         />
       </div>
       {state.error ? (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="rounded-md bg-red-500/10 px-3 py-2 text-xs text-red-300" role="alert">
           {state.error}
         </p>
       ) : null}
