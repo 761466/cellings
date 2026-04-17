@@ -41,6 +41,12 @@ VALUES ('<auth.users의 uuid>', 'super_admin', NULL);
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 클라이언트·서버 공통 |
 | `SUPABASE_SERVICE_ROLE_KEY` | **서버 전용** — 대리점 코드→이메일 조회 등 |
 
+## Vercel 배포
+
+- **Framework Preset:** Next.js (자동 감지되면 그대로 두면 됩니다.)
+- **Output Directory:** 비워 두거나 기본값만 사용하세요. `public`으로 지정하면 빌드 후 *Missing public directory* 오류가 납니다. Next.js 출력은 `.next`이며 Vercel이 처리합니다.
+- 저장소 루트에 `vercel.json`의 `"framework": "nextjs"`가 있으면 설정이 흔들릴 때 도움이 됩니다.
+
 ## 스크립트
 
 - `npm run dev` — 개발 서버
