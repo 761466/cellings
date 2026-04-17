@@ -6,11 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  CATEGORY_LABEL,
-  CATEGORY_OPTIONS,
   PRODUCT_TYPE_LABEL,
-  type ProductCategory,
   type ProductType,
+  categoryLabel,
 } from "@/lib/domain";
 import { formatKRW } from "@/lib/utils";
 
@@ -19,22 +17,32 @@ export const metadata = { title: "카탈로그" };
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: ProductCategory | "all" };
+  searchParams: { q?: string; category?: string | "all" };
 }) {
   const { supabase } = await requireFranchise();
   const q = (searchParams.q ?? "").trim();
   const category = searchParams.category ?? "all";
 
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  const categoryMap = Object.fromEntries(
+    (categories ?? []).map((c) => [c.slug as string, c.name as string]),
+  ) as Record<string, string>;
+
   let query = supabase
     .from("products")
     .select(
-      "id, name, category, product_type, thumbnail_url, price_fixed, price_min, price_max, lead_time_days",
+      "id, name, category_slug, product_type, thumbnail_url, price_fixed, price_min, price_max, lead_time_days, product_categories(name)",
     )
     .eq("is_active", true)
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (q) query = query.ilike("name", `%${q}%`);
-  if (category !== "all") query = query.eq("category", category);
+  if (category !== "all") query = query.eq("category_slug", category);
 
   const { data } = await query;
   const list = data ?? [];
@@ -79,17 +87,17 @@ export default async function Page({
             >
               전체
             </Link>
-            {CATEGORY_OPTIONS.map((c) => (
+            {(categories ?? []).map((c) => (
               <Link
-                key={c.value}
-                href={buildUrl({ category: c.value })}
+                key={c.slug as string}
+                href={buildUrl({ category: c.slug as string })}
                 className={
-                  category === c.value
+                  category === (c.slug as string)
                     ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
                     : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
                 }
               >
-                {c.label}
+                {c.name as string}
               </Link>
             ))}
           </div>
@@ -121,7 +129,12 @@ export default async function Page({
               <div className="space-y-1 p-3">
                 <div className="flex flex-wrap items-center gap-1">
                   <Badge variant="outline">
-                    {CATEGORY_LABEL[p.category as ProductCategory]}
+                    {(() => {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const pc = (p as any).product_categories;
+                      const name = pc?.name as string | undefined;
+                      return name ?? categoryLabel(p.category_slug as string, categoryMap);
+                    })()}
                   </Badge>
                   <Badge variant="accent">
                     {PRODUCT_TYPE_LABEL[p.product_type as ProductType]}

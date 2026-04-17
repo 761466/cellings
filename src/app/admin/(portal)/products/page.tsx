@@ -9,11 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@/components/ui/table";
 import {
-  CATEGORY_LABEL,
-  CATEGORY_OPTIONS,
+  categoryLabel,
   PRODUCT_TYPE_LABEL,
   PRODUCT_TYPE_OPTIONS,
-  type ProductCategory,
   type ProductType,
 } from "@/lib/domain";
 import { formatKRW } from "@/lib/utils";
@@ -25,7 +23,7 @@ export default async function Page({
 }: {
   searchParams: {
     q?: string;
-    category?: ProductCategory | "all";
+    category?: string | "all";
     type?: ProductType | "all";
     status?: "all" | "active" | "inactive";
     view?: "grid" | "list";
@@ -38,16 +36,25 @@ export default async function Page({
   const status = searchParams.status ?? "all";
   const view = searchParams.view ?? "grid";
 
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name, is_active, sort_order")
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  const categoryMap = Object.fromEntries(
+    (categories ?? []).map((c) => [c.slug as string, c.name as string]),
+  ) as Record<string, string>;
+
   let query = supabase
     .from("products")
     .select(
-      "id, name, category, product_type, thumbnail_url, price_fixed, price_min, price_max, is_active, sort_order, created_at",
+      "id, name, category_slug, product_type, thumbnail_url, price_fixed, price_min, price_max, is_active, sort_order, created_at, product_categories(name)",
     )
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   if (q) query = query.ilike("name", `%${q}%`);
-  if (category !== "all") query = query.eq("category", category);
+  if (category !== "all") query = query.eq("category_slug", category);
   if (type !== "all") query = query.eq("product_type", type);
   if (status === "active") query = query.eq("is_active", true);
   if (status === "inactive") query = query.eq("is_active", false);
@@ -103,17 +110,17 @@ export default async function Page({
             >
               전체
             </Link>
-            {CATEGORY_OPTIONS.map((c) => (
+            {(categories ?? []).map((c) => (
               <Link
-                key={c.value}
-                href={buildUrl({ category: c.value })}
+                key={c.slug as string}
+                href={buildUrl({ category: c.slug as string })}
                 className={
-                  category === c.value
+                  category === (c.slug as string)
                     ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
                     : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
                 }
               >
-                {c.label}
+                {c.name as string}
               </Link>
             ))}
           </div>
@@ -225,7 +232,12 @@ export default async function Page({
               <div className="space-y-1 p-3">
                 <div className="flex flex-wrap items-center gap-1">
                   <Badge variant="outline">
-                    {CATEGORY_LABEL[p.category as ProductCategory]}
+                    {(() => {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const pc = (p as any).product_categories;
+                      const name = pc?.name as string | undefined;
+                      return name ?? categoryLabel(p.category_slug as string, categoryMap);
+                    })()}
                   </Badge>
                   <Badge variant="accent">
                     {PRODUCT_TYPE_LABEL[p.product_type as ProductType]}
@@ -284,7 +296,14 @@ export default async function Page({
                         </span>
                       </Link>
                     </Td>
-                    <Td>{CATEGORY_LABEL[p.category as ProductCategory]}</Td>
+                    <Td>
+                      {(() => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const pc = (p as any).product_categories;
+                        const name = pc?.name as string | undefined;
+                        return name ?? categoryLabel(p.category_slug as string, categoryMap);
+                      })()}
+                    </Td>
                     <Td>{PRODUCT_TYPE_LABEL[p.product_type as ProductType]}</Td>
                     <Td className="tabular-nums">
                       {p.product_type === "ready_made"

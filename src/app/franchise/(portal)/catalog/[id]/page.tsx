@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  CATEGORY_LABEL,
   PRODUCT_TYPE_LABEL,
-  type ProductCategory,
   type ProductType,
+  categoryLabel,
 } from "@/lib/domain";
 import { formatKRW } from "@/lib/utils";
 import { ProductDetailView } from "@/components/product/product-detail-view";
@@ -25,11 +24,19 @@ export default async function Page({
   const { supabase } = await requireFranchise();
   const { data: p } = await supabase
     .from("products")
-    .select("*")
+    .select("*, product_categories(name, measurement_profile)")
     .eq("id", params.id)
     .eq("is_active", true)
     .maybeSingle();
   if (!p) notFound();
+
+  const joined = p as typeof p & {
+    product_categories?: { name?: string | null } | null;
+    category_slug?: string | null;
+  };
+  const categoryName =
+    joined.product_categories?.name ??
+    categoryLabel(joined.category_slug ?? undefined);
 
   return (
     <div className="print-page">
@@ -74,7 +81,7 @@ export default async function Page({
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="outline">
-                {CATEGORY_LABEL[p.category as ProductCategory]}
+                {categoryName}
               </Badge>
               <Badge variant="accent">
                 {PRODUCT_TYPE_LABEL[p.product_type as ProductType]}

@@ -37,6 +37,21 @@ export const metadata: Metadata = {
       "전국 대리점과 본사를 하나로 잇는 3D 바디스캔 맞춤 제작·주문·통계 통합 플랫폼.",
     type: "website",
     locale: "ko_KR",
+    images: [
+      {
+        url: "/cellings_opengraph.png",
+        width: 1200,
+        height: 630,
+        alt: "Cellings",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cellings · 3D 바디스캔 맞춤 운영 플랫폼",
+    description:
+      "전국 대리점과 본사를 하나로 잇는 3D 바디스캔 맞춤 제작·주문·통계 통합 플랫폼.",
+    images: ["/cellings_opengraph.png"],
   },
   robots: {
     index: true,

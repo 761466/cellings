@@ -1,24 +1,28 @@
-// 도메인 enum·상수·매핑 (v2.0 — 3D 스캐너 실측 데이터 반영)
+// 도메인 enum·상수·매핑 (v2.x)
+// - 카테고리는 DB(`product_categories.slug`) 기반으로 확장 가능
+// - 측정 템플릿은 고정 4종(measurement_profile)로 유지해 주문/측정 UX를 안정화
 
-export type ProductCategory = "pillow" | "shoes" | "clothing" | "shapewear";
+export type ProductCategory = string; // product_categories.slug
+export type MeasurementProfile = "pillow" | "shoes" | "clothing" | "shapewear";
 export type ProductType = "ready_made" | "custom" | "both";
 export type OrderChoice = "ready_made" | "custom";
 export type OrderStatus = "pending" | "confirmed" | "producing" | "done";
 export type Gender = "m" | "f" | "other";
 
-export const CATEGORY_LABEL: Record<ProductCategory, string> = {
+const DEFAULT_CATEGORY_LABEL: Record<MeasurementProfile, string> = {
   pillow: "베개",
   shoes: "신발",
   clothing: "의류",
   shapewear: "보정속옷",
 };
 
-export const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
-  { value: "pillow", label: "베개" },
-  { value: "shoes", label: "신발" },
-  { value: "clothing", label: "의류" },
-  { value: "shapewear", label: "보정속옷" },
-];
+export function categoryLabel(
+  slug: string | null | undefined,
+  map?: Record<string, string>,
+) {
+  if (!slug) return "-";
+  return map?.[slug] ?? DEFAULT_CATEGORY_LABEL[slug as MeasurementProfile] ?? slug;
+}
 
 export const PRODUCT_TYPE_LABEL: Record<ProductType, string> = {
   ready_made: "기성품",
@@ -354,7 +358,7 @@ const SHAPEWEAR_KEYS: string[] = [
   "body_shape_vhoa",
 ];
 
-export const CATEGORY_MEASUREMENT_KEYS: Record<ProductCategory, string[]> = {
+export const PROFILE_MEASUREMENT_KEYS: Record<MeasurementProfile, string[]> = {
   pillow: PILLOW_KEYS,
   shoes: SHOES_KEYS,
   clothing: CLOTHING_KEYS,
@@ -362,8 +366,8 @@ export const CATEGORY_MEASUREMENT_KEYS: Record<ProductCategory, string[]> = {
 };
 
 // 신발 좌/우 분리 뷰용
-export const CATEGORY_MEASUREMENT_KEYS_BY_SIDE: Record<
-  ProductCategory,
+export const PROFILE_MEASUREMENT_KEYS_BY_SIDE: Record<
+  MeasurementProfile,
   { left?: string[]; right?: string[]; common?: string[] }
 > = {
   pillow: { common: PILLOW_KEYS },

@@ -8,7 +8,7 @@ import { CategoryDonut } from "@/components/charts/category-donut";
 import { Button } from "@/components/ui/button";
 import { formatKRW, formatNumber } from "@/lib/utils";
 import { rangeBuckets, resolveRange } from "@/lib/range";
-import { CATEGORY_LABEL, type ProductCategory } from "@/lib/domain";
+import { categoryLabel } from "@/lib/domain";
 
 export const metadata = { title: "통계" };
 
@@ -23,9 +23,19 @@ export default async function Page({
     searchParams.from,
     searchParams.to,
   );
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  const categoryMap = Object.fromEntries(
+    (categories ?? []).map((c) => [c.slug as string, c.name as string]),
+  ) as Record<string, string>;
+
   const { data } = await supabase
     .from("orders")
-    .select("price, ordered_at, products(category)")
+    .select("price, ordered_at, products(category_slug, product_categories(name))")
     .eq("franchise_id", franchiseId)
     .gte("ordered_at", start.toISOString())
     .lte("ordered_at", end.toISOString());
@@ -46,15 +56,15 @@ export default async function Page({
     return { label: `${d.getMonth() + 1}/${d.getDate()}`, revenue: v };
   });
 
-  const byCat = new Map<ProductCategory, number>();
+  const byCat = new Map<string, number>();
   list.forEach((o) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = (o as any).products?.category as ProductCategory | undefined;
+    const c = (o as any).products?.category_slug as string | undefined;
     if (!c) return;
     byCat.set(c, (byCat.get(c) ?? 0) + 1);
   });
   const donutData = [...byCat.entries()].map(([k, v]) => ({
-    label: CATEGORY_LABEL[k],
+    label: categoryLabel(k, categoryMap),
     value: v,
   }));
 

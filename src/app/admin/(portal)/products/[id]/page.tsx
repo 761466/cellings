@@ -14,11 +14,19 @@ export default async function Page({
   params: { id: string };
 }) {
   const { supabase } = await requireAdmin();
-  const { data } = await supabase
+  const [{ data }, { data: categories }] = await Promise.all([
+    supabase
     .from("products")
-    .select("*")
+    .select("*, product_categories(name, measurement_profile)")
     .eq("id", params.id)
-    .maybeSingle();
+    .maybeSingle(),
+    supabase
+      .from("product_categories")
+      .select("slug, name, measurement_profile, is_active, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false }),
+  ]);
   if (!data) notFound();
 
   return (
@@ -34,7 +42,7 @@ export default async function Page({
           </Button>
         }
       />
-      <ProductForm initial={data as never} />
+      <ProductForm initial={data as never} categories={(categories ?? []) as never} />
     </div>
   );
 }

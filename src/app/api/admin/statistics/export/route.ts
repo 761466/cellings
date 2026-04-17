@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserProfile } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/server";
 import { resolveRange } from "@/lib/range";
-import { CATEGORY_LABEL, STATUS_LABEL } from "@/lib/domain";
+import { categoryLabel, STATUS_LABEL } from "@/lib/domain";
 
 function toCsv(rows: (string | number)[][]): string {
   // BOM 포함 → Excel 한글 호환
@@ -38,10 +38,19 @@ export async function GET(request: Request) {
   const kind = url.searchParams.get("kind") ?? "orders";
 
   const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name")
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  const categoryMap = Object.fromEntries(
+    (categories ?? []).map((c) => [c.slug as string, c.name as string]),
+  ) as Record<string, string>;
+
   let q = supabase
     .from("orders")
     .select(
-      "id, price, status, ordered_at, franchise_id, franchises(name, code), products(name, category), customers(name, phone)",
+      "id, price, status, ordered_at, franchise_id, franchises(name, code), products(name, category_slug, product_categories(name)), customers(name, phone)",
     )
     .gte("ordered_at", start.toISOString())
     .lte("ordered_at", end.toISOString())
@@ -102,7 +111,7 @@ export async function GET(request: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (o as any).products?.name ?? "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      CATEGORY_LABEL[(o as any).products?.category as keyof typeof CATEGORY_LABEL] ?? "",
+      categoryLabel((o as any).products?.category_slug as string, categoryMap),
       o.price as number,
       STATUS_LABEL[o.status as keyof typeof STATUS_LABEL] ?? String(o.status),
     ]),

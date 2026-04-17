@@ -3,10 +3,18 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { ProductForm } from "../product-form";
+import { requireAdmin } from "@/lib/auth/guard";
 
 export const metadata = { title: "상품 추가" };
 
-export default function Page() {
+export default async function Page() {
+  const { supabase } = await requireAdmin();
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name, measurement_profile, is_active, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
   return (
     <div className="space-y-6">
       <PageHeader
@@ -20,7 +28,7 @@ export default function Page() {
           </Button>
         }
       />
-      <ProductForm />
+      <ProductForm categories={(categories ?? []) as never} />
     </div>
   );
 }

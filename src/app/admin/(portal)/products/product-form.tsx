@@ -11,11 +11,11 @@ import {
   Trash2,
 } from "lucide-react";
 import {
-  CATEGORY_OPTIONS,
   PRODUCT_TYPE_OPTIONS,
+  categoryLabel,
+  type MeasurementProfile,
   type ProductType,
   PRODUCT_TYPE_LABEL,
-  CATEGORY_LABEL,
 } from "@/lib/domain";
 import type { DetailBlock, Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,9 @@ import { formatKRW } from "@/lib/utils";
 type FormState = {
   id?: string;
   name: string;
-  category: Product["category"];
+  category_slug: string;
+  category_name?: string | null;
+  measurement_profile?: MeasurementProfile | null;
   product_type: ProductType;
   thumbnail_url: string;
   detail_blocks: DetailBlock[];
@@ -47,12 +49,39 @@ type FormState = {
   sort_order: number | "";
 };
 
-export function ProductForm({ initial }: { initial?: Partial<Product> }) {
+export function ProductForm({
+  initial,
+  categories,
+}: {
+  initial?: Partial<Product>;
+  categories: Array<{
+    slug: string;
+    name: string;
+    measurement_profile: MeasurementProfile;
+    is_active: boolean;
+    sort_order: number | null;
+  }>;
+}) {
   const router = useRouter();
+  const initialJoin =
+    (initial as Partial<Product> & {
+      product_categories?: {
+        name?: string | null;
+        measurement_profile?: MeasurementProfile | null;
+      } | null;
+    })?.product_categories ?? null;
   const [state, setState] = React.useState<FormState>({
     id: initial?.id,
     name: initial?.name ?? "",
-    category: (initial?.category ?? "pillow") as Product["category"],
+    category_slug: (initial?.category_slug ?? "clothing") as string,
+    category_name:
+      initial?.category_name ??
+      (initialJoin?.name ?? undefined) ??
+      null,
+    measurement_profile:
+      initial?.measurement_profile ??
+      (initialJoin?.measurement_profile ?? undefined) ??
+      null,
     product_type: (initial?.product_type ?? "ready_made") as ProductType,
     thumbnail_url: initial?.thumbnail_url ?? "",
     detail_blocks: (initial?.detail_blocks as DetailBlock[]) ?? [],
@@ -87,7 +116,7 @@ export function ProductForm({ initial }: { initial?: Partial<Product> }) {
       const res = await saveProduct({
         id: state.id,
         name: state.name,
-        category: state.category,
+        category_slug: state.category_slug,
         product_type: state.product_type,
         thumbnail_url: state.thumbnail_url,
         detail_blocks: state.detail_blocks,
@@ -128,14 +157,18 @@ export function ProductForm({ initial }: { initial?: Partial<Product> }) {
             <div className="space-y-1.5">
               <Label>카테고리</Label>
               <Select
-                value={state.category}
-                onChange={(e) =>
-                  set("category", e.target.value as Product["category"])
-                }
+                value={state.category_slug}
+                onChange={(e) => {
+                  const slug = e.target.value as string;
+                  set("category_slug", slug);
+                  const found = categories?.find((c) => c.slug === slug);
+                  set("category_name", found?.name ?? null);
+                  set("measurement_profile", found?.measurement_profile ?? null);
+                }}
               >
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+                {(categories ?? []).map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
                   </option>
                 ))}
               </Select>
@@ -357,7 +390,7 @@ export function ProductForm({ initial }: { initial?: Partial<Product> }) {
                 <div className="space-y-1">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge variant="outline">
-                      {CATEGORY_LABEL[state.category]}
+                      {state.category_name ?? categoryLabel(state.category_slug)}
                     </Badge>
                     <Badge variant="accent">
                       {PRODUCT_TYPE_LABEL[state.product_type]}

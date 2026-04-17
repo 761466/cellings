@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   LayoutDashboard,
   Store,
+  Tags,
   Package,
   ShoppingCart,
   BarChart3,
@@ -35,6 +36,12 @@ const groups: NavGroup[] = [
         href: "/admin/products",
         label: "상품",
         icon: <Package className="h-4 w-4" />,
+        matchPrefix: true,
+      },
+      {
+        href: "/admin/categories",
+        label: "카테고리",
+        icon: <Tags className="h-4 w-4" />,
         matchPrefix: true,
       },
       {

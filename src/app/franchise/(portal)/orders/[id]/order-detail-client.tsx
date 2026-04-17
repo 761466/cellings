@@ -11,16 +11,16 @@ import { toast } from "@/components/ui/toast";
 import { CategoryMeasurementView } from "@/components/measurements/category-measurement-view";
 import { ScannerMeasurementView } from "@/components/measurements/scanner-measurement-view";
 import {
-  CATEGORY_LABEL,
-  CATEGORY_MEASUREMENT_KEYS,
+  PROFILE_MEASUREMENT_KEYS,
   CHOICE_LABEL,
   STATUS_COLOR,
   STATUS_LABEL,
   MEASUREMENT_META,
+  categoryLabel,
   formatMeasurementValue,
   type OrderStatus,
   type OrderChoice,
-  type ProductCategory,
+  type MeasurementProfile,
   type MeasurementData,
 } from "@/lib/domain";
 import { formatDate, formatDateTime, formatKRW } from "@/lib/utils";
@@ -50,7 +50,12 @@ export function OrderDetailClient({
   };
   franchise: { name: string; code: string; phone: string; address: string };
   customer: { name: string; phone: string };
-  product: { name: string; category: ProductCategory };
+  product: {
+    name: string;
+    category_slug: string;
+    category_name: string | null;
+    measurement_profile: MeasurementProfile;
+  };
   measurement: { scanned_at: string; data: MeasurementData } | null;
 }) {
   const [status, setStatus] = React.useState<OrderStatus>(order.status);
@@ -76,7 +81,7 @@ export function OrderDetailClient({
           : null;
 
   const measurementRows = measurement
-    ? CATEGORY_MEASUREMENT_KEYS[product.category].map((k) => {
+    ? PROFILE_MEASUREMENT_KEYS[product.measurement_profile].map((k) => {
         const meta = MEASUREMENT_META[k];
         const v = measurement.data[k];
         const sidePrefix = meta?.side
@@ -109,7 +114,7 @@ export function OrderDetailClient({
     customer,
     product: {
       name: product.name,
-      category: CATEGORY_LABEL[product.category],
+      category: product.category_name ?? categoryLabel(product.category_slug),
     },
     measurements: measurementRows,
   };
@@ -152,7 +157,7 @@ export function OrderDetailClient({
           <Card>
             <CardHeader className="flex-row items-center justify-between gap-2">
               <CardTitle>
-                제작 측정값 · {CATEGORY_LABEL[product.category]}
+                제작 측정값 · {product.category_name ?? categoryLabel(product.category_slug)}
               </CardTitle>
               <button
                 type="button"
@@ -166,7 +171,8 @@ export function OrderDetailClient({
             </CardHeader>
             <CardContent className="space-y-5">
               <CategoryMeasurementView
-                category={product.category}
+                profile={product.measurement_profile}
+                categoryName={product.category_name ?? categoryLabel(product.category_slug)}
                 data={measurement.data}
               />
               {showFullBody ? (

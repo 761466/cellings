@@ -4,7 +4,6 @@ import { requireAdmin } from "@/lib/auth/guard";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import type { DetailBlock } from "@/lib/types";
 import type {
-  ProductCategory,
   ProductType,
 } from "@/lib/domain";
 import { revalidatePath } from "next/cache";
@@ -13,7 +12,7 @@ import { redirect } from "next/navigation";
 export type ProductPayload = {
   id?: string;
   name: string;
-  category: ProductCategory;
+  category_slug: string;
   product_type: ProductType;
   thumbnail_url: string;
   detail_blocks: DetailBlock[];
@@ -31,6 +30,7 @@ export async function saveProduct(payload: ProductPayload) {
 
   if (!payload.name.trim()) throw new Error("상품명은 필수입니다.");
   if (!payload.thumbnail_url) throw new Error("썸네일이 필요합니다.");
+  if (!payload.category_slug) throw new Error("카테고리를 선택해 주세요.");
   if (payload.product_type === "ready_made") {
     if (!payload.price_fixed)
       throw new Error("기성품은 확정가가 필요합니다.");
@@ -50,7 +50,7 @@ export async function saveProduct(payload: ProductPayload) {
 
   const dto = {
     name: payload.name.trim(),
-    category: payload.category,
+    category_slug: payload.category_slug,
     product_type: payload.product_type,
     thumbnail_url: payload.thumbnail_url,
     detail_blocks: payload.detail_blocks,

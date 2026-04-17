@@ -1,6 +1,7 @@
 import type {
   Gender,
   MeasurementData,
+  MeasurementProfile,
   OrderChoice,
   OrderStatus,
   ProductCategory,
@@ -46,7 +47,9 @@ export type DetailBlock =
 
 export type Product = {
   id: string;
-  category: ProductCategory;
+  category_slug: ProductCategory;
+  category_name?: string | null;
+  measurement_profile?: MeasurementProfile | null;
   product_type: ProductType;
   name: string;
   thumbnail_url: string;

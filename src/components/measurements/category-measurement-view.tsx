@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  CATEGORY_LABEL,
-  CATEGORY_MEASUREMENT_KEYS_BY_SIDE,
+  PROFILE_MEASUREMENT_KEYS_BY_SIDE,
   MEASUREMENT_META,
+  categoryLabel,
   formatMeasurementValue,
   type MeasurementData,
-  type ProductCategory,
+  type MeasurementProfile,
 } from "@/lib/domain";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -55,22 +55,26 @@ function KeyGrid({
 }
 
 export function CategoryMeasurementView({
-  category,
+  profile,
+  categoryName,
   data,
   compact,
 }: {
-  category: ProductCategory;
+  profile: MeasurementProfile;
+  categoryName?: string | null;
   data: MeasurementData;
   compact?: boolean;
 }) {
-  const mapping = CATEGORY_MEASUREMENT_KEYS_BY_SIDE[category];
+  const mapping = PROFILE_MEASUREMENT_KEYS_BY_SIDE[profile];
   const [side, setSide] = React.useState<"left" | "right">("left");
 
   if (mapping.common) {
     return (
       <div>
         <div className="mb-2 flex items-center gap-2">
-          <Badge variant="outline">{CATEGORY_LABEL[category]}</Badge>
+          <Badge variant="outline">
+            {categoryName ?? categoryLabel(profile)}
+          </Badge>
           <span className="text-xs text-muted-foreground">
             제작에 필요한 측정값
           </span>
@@ -85,7 +89,9 @@ export function CategoryMeasurementView({
   return (
     <div>
       <div className="mb-3 flex items-center gap-2">
-        <Badge variant="outline">{CATEGORY_LABEL[category]}</Badge>
+        <Badge variant="outline">
+          {categoryName ?? categoryLabel(profile)}
+        </Badge>
         <span className="text-xs text-muted-foreground">
           좌/우발 각각 측정값
         </span>

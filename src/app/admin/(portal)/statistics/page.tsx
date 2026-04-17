@@ -9,11 +9,10 @@ import { RevenueBarChart } from "@/components/charts/revenue-bar-chart";
 import { CategoryDonut } from "@/components/charts/category-donut";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@/components/ui/table";
 import {
-  CATEGORY_LABEL,
   STATUS_COLOR,
   STATUS_LABEL,
   type OrderStatus,
-  type ProductCategory,
+  categoryLabel,
 } from "@/lib/domain";
 import { formatKRW, formatNumber } from "@/lib/utils";
 import { resolveRange, rangeBuckets } from "@/lib/range";
@@ -44,10 +43,19 @@ export default async function Page({
     .select("id, name, code")
     .order("name");
 
+  const { data: categories } = await supabase
+    .from("product_categories")
+    .select("slug, name")
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  const categoryMap = Object.fromEntries(
+    (categories ?? []).map((c) => [c.slug as string, c.name as string]),
+  ) as Record<string, string>;
+
   let ordersQuery = supabase
     .from("orders")
     .select(
-      "id, price, status, ordered_at, franchise_id, franchises(name, code), products(name, category), customers(name)",
+      "id, price, status, ordered_at, franchise_id, franchises(name, code), products(name, category_slug, product_categories(name)), customers(name)",
     )
     .gte("ordered_at", start.toISOString())
     .lte("ordered_at", end.toISOString())
@@ -77,15 +85,15 @@ export default async function Page({
   });
 
   // 카테고리별 주문 수
-  const byCat = new Map<ProductCategory, number>();
+  const byCat = new Map<string, number>();
   list.forEach((o) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = (o as any).products?.category as ProductCategory | undefined;
+    const c = (o as any).products?.category_slug as string | undefined;
     if (!c) return;
     byCat.set(c, (byCat.get(c) ?? 0) + 1);
   });
   const donutData = [...byCat.entries()].map(([k, v]) => ({
-    label: CATEGORY_LABEL[k],
+    label: categoryLabel(k, categoryMap),
     value: v,
   }));
 

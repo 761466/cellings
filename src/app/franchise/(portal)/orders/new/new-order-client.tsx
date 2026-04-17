@@ -15,10 +15,10 @@ import { toast } from "@/components/ui/toast";
 import { CategoryMeasurementView } from "@/components/measurements/category-measurement-view";
 import { ScannerMeasurementView } from "@/components/measurements/scanner-measurement-view";
 import {
-  CATEGORY_LABEL,
   PRODUCT_TYPE_LABEL,
+  categoryLabel,
+  type MeasurementProfile,
   type OrderChoice,
-  type ProductCategory,
   type ProductType,
   type MeasurementData,
 } from "@/lib/domain";
@@ -41,7 +41,9 @@ type MeasurementRec = {
 type Product = {
   id: string;
   name: string;
-  category: ProductCategory;
+  category_slug: string;
+  // server select may include nested product_categories
+  product_categories?: { name?: string | null; measurement_profile?: MeasurementProfile | null } | null;
   product_type: ProductType;
   price_fixed: number | null;
   price_min: number | null;
@@ -103,6 +105,10 @@ export function NewOrderClient({
 
   const product = products.find((p) => p.id === productId);
   const measurement = measurements.find((m) => m.id === measurementId);
+  const productCategoryName =
+    product?.product_categories?.name ?? categoryLabel(product?.category_slug);
+  const productProfile =
+    product?.product_categories?.measurement_profile ?? "clothing";
 
   // 선택 가능한 choice 옵션
   const choiceOptions = React.useMemo<OrderChoice[]>(() => {
@@ -243,7 +249,8 @@ export function NewOrderClient({
                   product ? (
                     <div className="rounded-lg border border-border bg-muted/30 p-4">
                       <CategoryMeasurementView
-                        category={product.category}
+                        profile={productProfile}
+                        categoryName={productCategoryName}
                         data={measurement.data}
                       />
                       <FullBodyToggle data={measurement.data} />
@@ -291,7 +298,7 @@ export function NewOrderClient({
                   <div className="space-y-1 p-2.5">
                     <div className="flex gap-1">
                       <Badge variant="outline">
-                        {CATEGORY_LABEL[p.category]}
+                        {p.product_categories?.name ?? categoryLabel(p.category_slug)}
                       </Badge>
                       <Badge variant="accent">
                         {PRODUCT_TYPE_LABEL[p.product_type]}

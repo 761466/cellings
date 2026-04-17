@@ -9,7 +9,7 @@ import type {
   MeasurementData,
   OrderChoice,
   OrderStatus,
-  ProductCategory,
+  MeasurementProfile,
 } from "@/lib/domain";
 
 export const metadata = { title: "주문 상세" };
@@ -25,7 +25,7 @@ export default async function Page({
     .select(
       `
       id, price, quantity, status, product_type_selected, ordered_at, memo,
-      products(name, category),
+      products(name, category_slug, product_categories(name, measurement_profile)),
       customers(name, phone),
       measurements(id, scanned_at, data),
       franchises(name, code, phone, address)
@@ -74,7 +74,11 @@ export default async function Page({
         }}
         product={{
           name: d.products?.name ?? "",
-          category: (d.products?.category ?? "pillow") as ProductCategory,
+          category_name: d.products?.product_categories?.name ?? null,
+          category_slug: d.products?.category_slug ?? "",
+          measurement_profile:
+            (d.products?.product_categories?.measurement_profile ??
+              "clothing") as MeasurementProfile,
         }}
         measurement={
           d.measurements
