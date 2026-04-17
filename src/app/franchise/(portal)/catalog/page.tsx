@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   PRODUCT_TYPE_LABEL,
   type ProductType,
@@ -23,12 +24,13 @@ export default async function Page({
   const q = (searchParams.q ?? "").trim();
   const category = searchParams.category ?? "all";
 
-  const { data: categories } = await supabase
+  const { data: categories, error: catErr } = await supabase
     .from("product_categories")
     .select("slug, name")
     .eq("is_active", true)
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
+  if (catErr) throw new Error(`카테고리 로드 실패: ${catErr.message}`);
   const categoryMap = Object.fromEntries(
     (categories ?? []).map((c) => [c.slug as string, c.name as string]),
   ) as Record<string, string>;
@@ -44,17 +46,9 @@ export default async function Page({
   if (q) query = query.ilike("name", `%${q}%`);
   if (category !== "all") query = query.eq("category_slug", category);
 
-  const { data } = await query;
+  const { data, error: prodErr } = await query;
+  if (prodErr) throw new Error(`상품 로드 실패: ${prodErr.message}`);
   const list = data ?? [];
-
-  const buildUrl = (patch: Record<string, string>) => {
-    const u = new URLSearchParams({
-      ...(q ? { q } : {}),
-      category,
-      ...patch,
-    } as Record<string, string>);
-    return `/franchise/catalog?${u.toString()}`;
-  };
 
   return (
     <div className="space-y-6">
@@ -76,31 +70,27 @@ export default async function Page({
             />
           </form>
 
-          <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-background p-1 text-xs">
-            <Link
-              href={buildUrl({ category: "all" })}
-              className={
-                category === "all"
-                  ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
-                  : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
-              }
-            >
-              전체
-            </Link>
-            {(categories ?? []).map((c) => (
-              <Link
-                key={c.slug as string}
-                href={buildUrl({ category: c.slug as string })}
-                className={
-                  category === (c.slug as string)
-                    ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
-                    : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
-                }
+          <form method="get" className="flex items-end gap-2">
+            <input type="hidden" name="q" value={q} />
+            <label className="text-xs text-muted-foreground">
+              카테고리{" "}
+              <select
+                name="category"
+                defaultValue={category}
+                className="ml-1 h-9 w-[220px] rounded-lg border border-border bg-background px-3 text-sm"
               >
-                {c.name as string}
-              </Link>
-            ))}
-          </div>
+                <option value="all">전체</option>
+                {(categories ?? []).map((c) => (
+                  <option key={c.slug as string} value={c.slug as string}>
+                    {c.name as string}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button type="submit" size="sm" variant="outline">
+              적용
+            </Button>
+          </form>
         </CardContent>
       </Card>
 

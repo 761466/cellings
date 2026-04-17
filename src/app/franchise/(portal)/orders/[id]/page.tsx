@@ -5,12 +5,8 @@ import { requireFranchise } from "@/lib/auth/guard";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { OrderDetailClient } from "./order-detail-client";
-import type {
-  MeasurementData,
-  OrderChoice,
-  OrderStatus,
-  MeasurementProfile,
-} from "@/lib/domain";
+import { resolveProfileFromCategorySlug } from "@/lib/domain";
+import type { MeasurementData, OrderChoice, OrderStatus, MeasurementProfile } from "@/lib/domain";
 
 export const metadata = { title: "주문 상세" };
 
@@ -25,7 +21,7 @@ export default async function Page({
     .select(
       `
       id, price, quantity, status, product_type_selected, ordered_at, memo,
-      products(name, category_slug, product_categories(name, measurement_profile)),
+      products(name, category_slug, product_categories(name)),
       customers(name, phone),
       measurements(id, scanned_at, data),
       franchises(name, code, phone, address)
@@ -76,9 +72,9 @@ export default async function Page({
           name: d.products?.name ?? "",
           category_name: d.products?.product_categories?.name ?? null,
           category_slug: d.products?.category_slug ?? "",
-          measurement_profile:
-            (d.products?.product_categories?.measurement_profile ??
-              "clothing") as MeasurementProfile,
+          measurement_profile: resolveProfileFromCategorySlug(
+            d.products?.category_slug ?? "",
+          ) as MeasurementProfile,
         }}
         measurement={
           d.measurements

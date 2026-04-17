@@ -13,7 +13,6 @@ import {
 import {
   PRODUCT_TYPE_OPTIONS,
   categoryLabel,
-  type MeasurementProfile,
   type ProductType,
   PRODUCT_TYPE_LABEL,
 } from "@/lib/domain";
@@ -37,7 +36,6 @@ type FormState = {
   name: string;
   category_slug: string;
   category_name?: string | null;
-  measurement_profile?: MeasurementProfile | null;
   product_type: ProductType;
   thumbnail_url: string;
   detail_blocks: DetailBlock[];
@@ -57,7 +55,6 @@ export function ProductForm({
   categories: Array<{
     slug: string;
     name: string;
-    measurement_profile: MeasurementProfile;
     is_active: boolean;
     sort_order: number | null;
   }>;
@@ -65,10 +62,7 @@ export function ProductForm({
   const router = useRouter();
   const initialJoin =
     (initial as Partial<Product> & {
-      product_categories?: {
-        name?: string | null;
-        measurement_profile?: MeasurementProfile | null;
-      } | null;
+      product_categories?: { name?: string | null } | null;
     })?.product_categories ?? null;
   const [state, setState] = React.useState<FormState>({
     id: initial?.id,
@@ -77,10 +71,6 @@ export function ProductForm({
     category_name:
       initial?.category_name ??
       (initialJoin?.name ?? undefined) ??
-      null,
-    measurement_profile:
-      initial?.measurement_profile ??
-      (initialJoin?.measurement_profile ?? undefined) ??
       null,
     product_type: (initial?.product_type ?? "ready_made") as ProductType,
     thumbnail_url: initial?.thumbnail_url ?? "",
@@ -163,7 +153,6 @@ export function ProductForm({
                   set("category_slug", slug);
                   const found = categories?.find((c) => c.slug === slug);
                   set("category_name", found?.name ?? null);
-                  set("measurement_profile", found?.measurement_profile ?? null);
                 }}
               >
                 {(categories ?? []).map((c) => (

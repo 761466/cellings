@@ -379,6 +379,36 @@ export const PROFILE_MEASUREMENT_KEYS_BY_SIDE: Record<
   },
 };
 
+export function resolveMeasurementKeysBySide(args: {
+  profile: MeasurementProfile;
+  customKeys?: string[] | null;
+}): { left?: string[]; right?: string[]; common?: string[] } {
+  const keys =
+    args.customKeys && args.customKeys.length > 0
+      ? args.customKeys
+      : PROFILE_MEASUREMENT_KEYS[args.profile];
+
+  const left = keys.filter((k) => k.startsWith("left_"));
+  const right = keys.filter((k) => k.startsWith("right_"));
+  const hasSides = left.length > 0 || right.length > 0;
+
+  if (hasSides) {
+    return { left, right };
+  }
+  return { common: keys };
+}
+
+export function resolveProfileFromCategorySlug(
+  slug: string | null | undefined,
+): MeasurementProfile {
+  if (!slug) return "clothing";
+  if (slug === "pillow") return "pillow";
+  if (slug === "shoes") return "shoes";
+  if (slug === "shapewear") return "shapewear";
+  if (slug === "clothing") return "clothing";
+  return "clothing";
+}
+
 // ─────────────────────────────────────────────────────────
 // 측정 데이터 타입
 // ─────────────────────────────────────────────────────────

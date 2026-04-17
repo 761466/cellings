@@ -9,20 +9,14 @@ import { upsertCategory, deleteCategory } from "./actions";
 
 export const metadata = { title: "카테고리" };
 
-const PROFILES: { value: "pillow" | "shoes" | "clothing" | "shapewear"; label: string }[] = [
-  { value: "pillow", label: "베개 템플릿" },
-  { value: "shoes", label: "신발 템플릿" },
-  { value: "clothing", label: "의류 템플릿" },
-  { value: "shapewear", label: "보정속옷 템플릿" },
-];
-
 export default async function Page() {
   const { supabase } = await requireAdmin();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("product_categories")
-    .select("slug, name, measurement_profile, is_active, sort_order, created_at")
+    .select("slug, name, is_active, sort_order, created_at")
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
+  if (error) throw new Error(`카테고리 로드 실패: ${error.message}`);
   const list = data ?? [];
 
   return (
@@ -42,47 +36,40 @@ export default async function Page() {
               "use server";
               const slug = String(formData.get("slug") ?? "").trim();
               const name = String(formData.get("name") ?? "").trim();
-              const profile = String(formData.get("measurement_profile") ?? "clothing") as never;
               const isActive = String(formData.get("is_active") ?? "on") === "on";
               const sortRaw = String(formData.get("sort_order") ?? "").trim();
               const sort = sortRaw === "" ? null : Number(sortRaw);
               await upsertCategory({
                 slug,
                 name,
-                measurement_profile: profile,
                 is_active: isActive,
                 sort_order: Number.isNaN(sort as number) ? null : sort,
               });
             }}
-            className="grid grid-cols-1 gap-3 md:grid-cols-5"
+            className="grid grid-cols-1 gap-3 md:grid-cols-5 md:items-end"
           >
             <div className="md:col-span-1">
               <label className="text-xs font-medium text-muted-foreground">slug</label>
-              <Input name="slug" placeholder="예: pillow-premium" />
-              <div className="mt-1 text-[11px] text-muted-foreground">
+              <Input
+                name="slug"
+                placeholder="예: pillow-premium"
+                required
+                minLength={2}
+                pattern="[A-Za-z0-9-]+"
+              />
+              <div className="mt-1 min-h-[14px] text-[11px] text-muted-foreground">
                 영문/숫자/하이픈
               </div>
             </div>
             <div className="md:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">표시명</label>
-              <Input name="name" placeholder="예: 프리미엄 베개" />
+              <Input name="name" placeholder="예: 프리미엄 베개" required />
+              <div className="mt-1 min-h-[14px] text-[11px] text-muted-foreground">
+                {" "}
+              </div>
             </div>
-            <div className="md:col-span-1">
-              <label className="text-xs font-medium text-muted-foreground">측정 템플릿</label>
-              <select
-                name="measurement_profile"
-                className="mt-1 h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
-                defaultValue="clothing"
-              >
-                {PROFILES.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="md:col-span-1 flex items-end gap-2">
-              <label className="inline-flex items-center gap-2 text-sm">
+            <div className="md:col-span-2 flex items-end gap-2 pb-[14px]">
+              <label className="inline-flex h-9 items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   name="is_active"
@@ -108,7 +95,6 @@ export default async function Page() {
               <Tr>
                 <Th>slug</Th>
                 <Th>표시명</Th>
-                <Th>템플릿</Th>
                 <Th>정렬</Th>
                 <Th>상태</Th>
                 <Th />
@@ -117,7 +103,7 @@ export default async function Page() {
             <Tbody>
               {list.length === 0 ? (
                 <Tr>
-                  <Td colSpan={6} className="py-10 text-center text-muted-foreground">
+                  <Td colSpan={5} className="py-10 text-center text-muted-foreground">
                     카테고리가 없습니다.
                   </Td>
                 </Tr>
@@ -126,9 +112,6 @@ export default async function Page() {
                   <Tr key={c.slug as string}>
                     <Td className="font-mono text-xs">{c.slug as string}</Td>
                     <Td className="font-medium">{c.name as string}</Td>
-                    <Td>
-                      <Badge variant="outline">{c.measurement_profile as string}</Badge>
-                    </Td>
                     <Td className="tabular-nums">{(c.sort_order as number | null) ?? "-"}</Td>
                     <Td>
                       {c.is_active ? (

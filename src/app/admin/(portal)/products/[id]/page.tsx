@@ -16,13 +16,13 @@ export default async function Page({
   const { supabase } = await requireAdmin();
   const [{ data }, { data: categories }] = await Promise.all([
     supabase
-    .from("products")
-    .select("*, product_categories(name, measurement_profile)")
+      .from("products")
+    .select("*, product_categories(name)")
     .eq("id", params.id)
     .maybeSingle(),
     supabase
       .from("product_categories")
-      .select("slug, name, measurement_profile, is_active, sort_order")
+      .select("slug, name, is_active, sort_order")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false }),

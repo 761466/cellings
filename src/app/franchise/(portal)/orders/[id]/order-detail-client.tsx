@@ -11,13 +11,13 @@ import { toast } from "@/components/ui/toast";
 import { CategoryMeasurementView } from "@/components/measurements/category-measurement-view";
 import { ScannerMeasurementView } from "@/components/measurements/scanner-measurement-view";
 import {
-  PROFILE_MEASUREMENT_KEYS,
   CHOICE_LABEL,
   STATUS_COLOR,
   STATUS_LABEL,
   MEASUREMENT_META,
   categoryLabel,
   formatMeasurementValue,
+  resolveMeasurementKeysBySide,
   type OrderStatus,
   type OrderChoice,
   type MeasurementProfile,
@@ -80,8 +80,16 @@ export function OrderDetailClient({
           ? "완료 처리"
           : null;
 
+  const keysForPdf = (() => {
+    const bySide = resolveMeasurementKeysBySide({
+      profile: product.measurement_profile,
+      customKeys: null,
+    });
+    return bySide.common ?? [...(bySide.left ?? []), ...(bySide.right ?? [])];
+  })();
+
   const measurementRows = measurement
-    ? PROFILE_MEASUREMENT_KEYS[product.measurement_profile].map((k) => {
+    ? keysForPdf.map((k) => {
         const meta = MEASUREMENT_META[k];
         const v = measurement.data[k];
         const sidePrefix = meta?.side

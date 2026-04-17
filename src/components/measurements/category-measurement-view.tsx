@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import {
-  PROFILE_MEASUREMENT_KEYS_BY_SIDE,
   MEASUREMENT_META,
   categoryLabel,
   formatMeasurementValue,
+  resolveMeasurementKeysBySide,
   type MeasurementData,
   type MeasurementProfile,
 } from "@/lib/domain";
@@ -65,7 +65,7 @@ export function CategoryMeasurementView({
   data: MeasurementData;
   compact?: boolean;
 }) {
-  const mapping = PROFILE_MEASUREMENT_KEYS_BY_SIDE[profile];
+  const mapping = resolveMeasurementKeysBySide({ profile, customKeys: null });
   const [side, setSide] = React.useState<"left" | "right">("left");
 
   if (mapping.common) {

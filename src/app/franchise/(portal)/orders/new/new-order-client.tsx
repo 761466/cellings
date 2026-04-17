@@ -17,7 +17,7 @@ import { ScannerMeasurementView } from "@/components/measurements/scanner-measur
 import {
   PRODUCT_TYPE_LABEL,
   categoryLabel,
-  type MeasurementProfile,
+  resolveProfileFromCategorySlug,
   type OrderChoice,
   type ProductType,
   type MeasurementData,
@@ -43,7 +43,9 @@ type Product = {
   name: string;
   category_slug: string;
   // server select may include nested product_categories
-  product_categories?: { name?: string | null; measurement_profile?: MeasurementProfile | null } | null;
+  product_categories?: {
+    name?: string | null;
+  } | null;
   product_type: ProductType;
   price_fixed: number | null;
   price_min: number | null;
@@ -107,8 +109,7 @@ export function NewOrderClient({
   const measurement = measurements.find((m) => m.id === measurementId);
   const productCategoryName =
     product?.product_categories?.name ?? categoryLabel(product?.category_slug);
-  const productProfile =
-    product?.product_categories?.measurement_profile ?? "clothing";
+  const productProfile = resolveProfileFromCategorySlug(product?.category_slug);
 
   // 선택 가능한 choice 옵션
   const choiceOptions = React.useMemo<OrderChoice[]>(() => {

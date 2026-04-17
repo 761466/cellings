@@ -99,31 +99,30 @@ export default async function Page({
             <input type="hidden" name="view" value={view} />
           </form>
 
-          <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-background p-1 text-xs">
-            <Link
-              href={buildUrl({ category: "all" })}
-              className={
-                category === "all"
-                  ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
-                  : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
-              }
-            >
-              전체
-            </Link>
-            {(categories ?? []).map((c) => (
-              <Link
-                key={c.slug as string}
-                href={buildUrl({ category: c.slug as string })}
-                className={
-                  category === (c.slug as string)
-                    ? "rounded-md bg-foreground px-3 py-1 text-primary-foreground"
-                    : "rounded-md px-3 py-1 text-muted-foreground hover:text-foreground"
-                }
+          <form method="get" className="flex items-end gap-2">
+            <input type="hidden" name="q" value={q} />
+            <input type="hidden" name="type" value={type} />
+            <input type="hidden" name="status" value={status} />
+            <input type="hidden" name="view" value={view} />
+            <label className="text-xs text-muted-foreground">
+              카테고리{" "}
+              <select
+                name="category"
+                defaultValue={category}
+                className="ml-1 h-9 w-[220px] rounded-lg border border-border bg-background px-3 text-sm"
               >
-                {c.name as string}
-              </Link>
-            ))}
-          </div>
+                <option value="all">전체</option>
+                {(categories ?? []).map((c) => (
+                  <option key={c.slug as string} value={c.slug as string}>
+                    {c.name as string}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button type="submit" size="sm" variant="outline">
+              적용
+            </Button>
+          </form>
 
           <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-background p-1 text-xs">
             <Link

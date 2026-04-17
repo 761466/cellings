@@ -17,7 +17,7 @@ export default async function Page() {
     supabase
       .from("products")
       .select(
-        "id, name, category_slug, product_categories(name, measurement_profile), product_type, price_fixed, price_min, price_max, lead_time_days, thumbnail_url",
+        "id, name, category_slug, product_categories(name), product_type, price_fixed, price_min, price_max, lead_time_days, thumbnail_url",
       )
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false })
