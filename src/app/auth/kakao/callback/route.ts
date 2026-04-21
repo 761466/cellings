@@ -26,12 +26,13 @@ function redirectTo(
   return NextResponse.redirect(new URL(path, base));
 }
 
-/** 카카오/기존 DB 형식 차이 대비: 숫자만 추출, +82 → 0 */
+/** 카카오/기존 DB 형식 차이 대비: 숫자만 추출, +82·82 → 0 접두 */
 function normalizePhoneDigits(raw: string | undefined | null): string | null {
   if (raw == null || !String(raw).trim()) return null;
-  let s = String(raw).replace(/\s/g, "");
-  if (s.startsWith("+82")) s = `0${s.slice(3)}`;
-  const digits = s.replace(/\D/g, "");
+  let digits = String(raw).replace(/\D/g, "");
+  if (digits.startsWith("82") && digits.length >= 10) {
+    digits = `0${digits.slice(2)}`;
+  }
   if (digits.length < 10) return null;
   return digits;
 }
@@ -56,6 +57,13 @@ function resolveDisplayName(user: KakaoUserResponse): string {
 }
 
 export async function GET(request: NextRequest) {
+  const oauthError = request.nextUrl.searchParams.get("error");
+  const oauthDesc = request.nextUrl.searchParams.get("error_description");
+  if (oauthError) {
+    console.error("[kakao/callback] OAuth error:", oauthError, oauthDesc ?? "");
+    return redirectTo(request, "/scan/error?reason=kakao_denied");
+  }
+
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
     return redirectTo(request, "/scan/error?reason=no_code");
@@ -87,24 +95,46 @@ export async function GET(request: NextRequest) {
 
     const tokenJson = (await tokenRes.json()) as KakaoTokenResponse;
     if (!tokenRes.ok || !tokenJson.access_token) {
-      return redirectTo(request, "/scan/error?reason=token_failed");
+      console.error(
+        "[kakao/callback] token exchange failed:",
+        tokenJson.error,
+        tokenJson.error_description,
+        "http_status",
+        tokenRes.status,
+      );
+      return redirectTo(request, "/scan/error?reason=kakao_oauth");
     }
     accessToken = tokenJson.access_token;
-  } catch {
-    return redirectTo(request, "/scan/error?reason=token_failed");
+  } catch (e) {
+    console.error("[kakao/callback] token fetch exception:", e);
+    return redirectTo(request, "/scan/error?reason=kakao_oauth");
   }
 
   let userJson: KakaoUserResponse;
   try {
     const userRes = await fetch("https://kapi.kakao.com/v2/user/me", {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+      },
+      body: new URLSearchParams({
+        property_keys: JSON.stringify([
+          "kakao_account.profile",
+          "kakao_account.name",
+          "kakao_account.phone_number",
+          "kakao_account.email",
+        ]),
+      }),
     });
     if (!userRes.ok) {
-      return redirectTo(request, "/scan/error?reason=token_failed");
+      console.error("[kakao/callback] user/me failed:", userRes.status);
+      return redirectTo(request, "/scan/error?reason=kakao_user");
     }
     userJson = (await userRes.json()) as KakaoUserResponse;
-  } catch {
-    return redirectTo(request, "/scan/error?reason=token_failed");
+  } catch (e) {
+    console.error("[kakao/callback] user/me exception:", e);
+    return redirectTo(request, "/scan/error?reason=kakao_user");
   }
 
   const name = resolveDisplayName(userJson);
@@ -112,7 +142,10 @@ export async function GET(request: NextRequest) {
     userJson.kakao_account?.phone_number,
   );
   if (!phoneDigits) {
-    return redirectTo(request, "/scan/error?reason=token_failed");
+    console.error(
+      "[kakao/callback] phone_number missing or invalid after consent; check Kakao scope & account phone link",
+    );
+    return redirectTo(request, "/scan/error?reason=kakao_phone");
   }
   const phoneFormatted = hyphenateKoreanMobile(phoneDigits);
 
