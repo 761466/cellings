@@ -22,7 +22,7 @@ export default async function Page({
       `
       id, price, quantity, status, product_type_selected, ordered_at, memo,
       products(name, category_slug, product_categories(name)),
-      customers(name, phone),
+      customers(name, phone, email),
       measurements(id, scanned_at, data),
       franchises(name, code, phone, address)
       `,
@@ -66,7 +66,8 @@ export default async function Page({
         }}
         customer={{
           name: d.customers?.name ?? "",
-          phone: d.customers?.phone ?? "",
+          phone: d.customers?.phone ?? null,
+          email: d.customers?.email ?? null,
         }}
         product={{
           name: d.products?.name ?? "",

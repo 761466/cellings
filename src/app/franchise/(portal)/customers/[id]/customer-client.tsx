@@ -33,7 +33,8 @@ export function CustomerClient({
   customer: {
     id: string;
     name: string;
-    phone: string;
+    phone: string | null;
+    email: string | null;
     gender: Gender | null;
     birth_year: number | null;
     memo: string | null;
@@ -52,7 +53,7 @@ export function CustomerClient({
 
   const [form, setForm] = React.useState({
     name: customer.name,
-    phone: customer.phone,
+    phone: customer.phone ?? "",
     gender: (customer.gender ?? "") as "" | Gender,
     birth_year: (customer.birth_year ?? "") as "" | number,
     memo: customer.memo ?? "",
@@ -174,7 +175,8 @@ export function CustomerClient({
           ) : (
             <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Field label="이름" value={customer.name} />
-              <Field label="연락처" value={customer.phone} />
+              <Field label="연락처" value={customer.phone ?? "-"} />
+              <Field label="이메일" value={customer.email ?? "-"} />
               <Field
                 label="성별"
                 value={

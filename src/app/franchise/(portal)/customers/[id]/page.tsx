@@ -48,7 +48,7 @@ export default async function Page({
     <div className="space-y-6">
       <PageHeader
         title={customer.name as string}
-        description={`고객 정보·측정·주문 이력 · ${customer.phone}`}
+        description={`고객 정보·측정·주문 이력 · ${[customer.phone, (customer as { email?: string | null }).email].filter(Boolean).join(" · ") || "-"}`}
         actions={
           <Button asChild>
             <Link href={`/franchise/orders/new?customer=${customer.id}`}>
@@ -62,7 +62,8 @@ export default async function Page({
         customer={{
           id: customer.id as string,
           name: customer.name as string,
-          phone: customer.phone as string,
+          phone: (customer.phone as string | null) ?? "",
+          email: ((customer as { email?: string | null }).email ?? null) as string | null,
           gender: (customer.gender ?? null) as Measurement["id"] | null as never,
           birth_year: (customer.birth_year ?? null) as number | null,
           memo: (customer.memo ?? null) as string | null,

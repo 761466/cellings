@@ -94,7 +94,7 @@ export type OrderPdfProps = {
     memo?: string | null;
   };
   franchise: { name: string; code: string; phone: string; address: string };
-  customer: { name: string; phone: string };
+  customer: { name: string; phone: string | null; email?: string | null };
   product: { name: string; category: string };
   measurements: { key: string; label: string; value: string }[];
 };
@@ -152,8 +152,10 @@ export function OrderPdf({
               <Text style={styles.value}>{customer.name}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>연락처</Text>
-              <Text style={styles.value}>{customer.phone}</Text>
+              <Text style={styles.label}>연락처·이메일</Text>
+              <Text style={styles.value}>
+                {customer.phone ?? customer.email ?? "-"}
+              </Text>
             </View>
           </View>
         </View>

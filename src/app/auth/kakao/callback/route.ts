@@ -9,10 +9,8 @@ type KakaoTokenResponse = {
 
 type KakaoUserResponse = {
   kakao_account?: {
-    name?: string;
-    phone_number?: string;
-    email?: string;
     profile?: { nickname?: string };
+    email?: string;
   };
   properties?: { nickname?: string };
 };
@@ -26,33 +24,21 @@ function redirectTo(
   return NextResponse.redirect(new URL(path, base));
 }
 
-/** 카카오/기존 DB 형식 차이 대비: 숫자만 추출, +82·82 → 0 접두 */
-function normalizePhoneDigits(raw: string | undefined | null): string | null {
+function normalizeEmail(raw: string | undefined | null): string | null {
   if (raw == null || !String(raw).trim()) return null;
-  let digits = String(raw).replace(/\D/g, "");
-  if (digits.startsWith("82") && digits.length >= 10) {
-    digits = `0${digits.slice(2)}`;
-  }
-  if (digits.length < 10) return null;
-  return digits;
+  return String(raw).trim().toLowerCase();
 }
 
-function hyphenateKoreanMobile(digits: string): string {
-  if (digits.length === 11 && digits.startsWith("010")) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-  }
-  return digits;
-}
-
-function resolveDisplayName(user: KakaoUserResponse): string {
+/** 닉네임 우선(동의 항목: 닉네임), 없으면 이메일 앞부분 */
+function resolveKakaoDisplayName(user: KakaoUserResponse): string {
   const acc = user.kakao_account;
-  const name = acc?.name?.trim();
-  if (name) return name;
   const nick =
     acc?.profile?.nickname?.trim() ?? user.properties?.nickname?.trim();
   if (nick) return nick;
-  const email = acc?.email?.trim();
-  if (email && email.includes("@")) return email.split("@")[0] ?? "고객";
+  const email = normalizeEmail(acc?.email);
+  if (email && email.includes("@")) {
+    return email.split("@")[0] ?? "고객";
+  }
   return "고객";
 }
 
@@ -121,8 +107,6 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         property_keys: JSON.stringify([
           "kakao_account.profile",
-          "kakao_account.name",
-          "kakao_account.phone_number",
           "kakao_account.email",
         ]),
       }),
@@ -137,27 +121,23 @@ export async function GET(request: NextRequest) {
     return redirectTo(request, "/scan/error?reason=kakao_user");
   }
 
-  const name = resolveDisplayName(userJson);
-  const phoneDigits = normalizePhoneDigits(
-    userJson.kakao_account?.phone_number,
-  );
-  if (!phoneDigits) {
+  const name = resolveKakaoDisplayName(userJson);
+  const email = normalizeEmail(userJson.kakao_account?.email);
+  if (!email) {
     console.error(
-      "[kakao/callback] phone_number missing or invalid after consent; check Kakao scope & account phone link",
+      "[kakao/callback] email missing; enable account_email consent and add scope to authorize URL",
     );
-    return redirectTo(request, "/scan/error?reason=kakao_phone");
+    return redirectTo(request, "/scan/error?reason=kakao_email");
   }
-  const phoneFormatted = hyphenateKoreanMobile(phoneDigits);
 
   try {
     const supabase = createServiceRoleClient();
 
-    const phoneVariants = [...new Set([phoneDigits, phoneFormatted])];
     const { data: existingRows, error: findErr } = await supabase
       .from("customers")
       .select("id")
       .is("deleted_at", null)
-      .in("phone", phoneVariants)
+      .eq("email", email)
       .order("created_at", { ascending: true })
       .limit(1);
 
@@ -179,13 +159,15 @@ export async function GET(request: NextRequest) {
       .insert({
         franchise_id: null,
         name,
-        phone: phoneFormatted,
+        email,
+        phone: null,
         privacy_agreed_at: new Date().toISOString(),
       })
       .select("id")
       .single();
 
     if (insertErr || !inserted?.id) {
+      console.error("[kakao/callback] insert failed:", insertErr);
       return redirectTo(request, "/scan/error?reason=db_error");
     }
 
@@ -193,7 +175,8 @@ export async function GET(request: NextRequest) {
       request,
       `/scan/complete?customer_id=${encodeURIComponent(inserted.id)}`,
     );
-  } catch {
+  } catch (e) {
+    console.error("[kakao/callback] db exception:", e);
     return redirectTo(request, "/scan/error?reason=db_error");
   }
 }

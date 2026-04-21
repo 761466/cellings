@@ -63,7 +63,20 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Cellings · 3D Body Scan Custom Platform
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <Link
+            href="/terms"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            이용약관
+          </Link>
+          <span className="hidden sm:inline" aria-hidden>
+            ·
+          </span>
+          <span>
+            © {new Date().getFullYear()} Cellings · 3D Body Scan Custom Platform
+          </span>
+        </div>
       </footer>
     </main>
   );

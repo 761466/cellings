@@ -63,9 +63,10 @@ export type Product = {
 
 export type Customer = {
   id: string;
-  franchise_id: string;
+  franchise_id: string | null;
   name: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
   gender: Gender | null;
   birth_year: number | null;
   memo: string | null;

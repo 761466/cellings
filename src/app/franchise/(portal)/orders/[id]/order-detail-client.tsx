@@ -49,7 +49,7 @@ export function OrderDetailClient({
     memo: string | null;
   };
   franchise: { name: string; code: string; phone: string; address: string };
-  customer: { name: string; phone: string };
+  customer: { name: string; phone: string | null; email: string | null };
   product: {
     name: string;
     category_slug: string;
@@ -142,7 +142,10 @@ export function OrderDetailClient({
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Field label="고객" value={customer.name} />
-            <Field label="연락처" value={customer.phone} />
+            <Field
+              label="연락처"
+              value={customer.phone ?? customer.email ?? "-"}
+            />
             <Field label="상품" value={product.name} />
             <Field
               label="유형"
